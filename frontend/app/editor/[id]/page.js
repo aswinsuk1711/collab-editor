@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import * as Y from 'yjs';
 import { useAuth } from '@/hooks/useAuth';
 import { getDocument, updateDocument, shareDocument, getDocumentHistory } from '@/lib/api';
 import { useCollaboration } from '@/hooks/useCollaboration';
@@ -26,6 +27,7 @@ export default function EditorPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
   const [editor, setEditor] = useState(null);
+  const [restoringHistory, setRestoringHistory] = useState(false);
 
   const { isOnline, pendingSync } = useOfflineSync();
 
@@ -86,6 +88,29 @@ export default function EditorPage() {
       setHistory(history);
     } catch (err) {
       console.error('Failed to load history:', err);
+    }
+  };
+
+  const restoreHistoryEntry = async (entry) => {
+    if (!ydoc || !editor || !session?.access_token) return;
+
+    try {
+      setRestoringHistory(true);
+      const updateBytes = Uint8Array.from(atob(entry.snapshot), (char) => char.charCodeAt(0));
+      const snapshotDoc = new Y.Doc();
+      Y.applyUpdate(snapshotDoc, updateBytes);
+      const restoredHtml = snapshotDoc.getText('content').toString() || '<p></p>';
+
+      ydoc.transact(() => {
+        Y.applyUpdate(ydoc, updateBytes);
+      });
+      editor.commands.setContent(restoredHtml, false);
+      await updateDocument(id, { content: restoredHtml }, session.access_token);
+      setShowHistory(false);
+    } catch (err) {
+      console.error('Failed to restore history:', err);
+    } finally {
+      setRestoringHistory(false);
     }
   };
 
@@ -177,6 +202,11 @@ export default function EditorPage() {
               provider={provider}
               user={user}
               onEditorReady={setEditor}
+              initialContent={document?.content || ''}
+              documentId={id}
+              token={session?.access_token}
+              isOnline={isOnline}
+              pendingSync={pendingSync}
             />
           )}
         </div>
@@ -258,6 +288,13 @@ export default function EditorPage() {
                       {new Date(entry.created_at).toLocaleString()}
                     </p>
                   </div>
+                  <button
+                    className={styles.restoreBtn}
+                    onClick={() => restoreHistoryEntry(entry)}
+                    disabled={restoringHistory}
+                  >
+                    {restoringHistory ? 'Restoring...' : 'Restore'}
+                  </button>
                 </li>
               ))}
             </ul>

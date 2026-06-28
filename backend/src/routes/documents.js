@@ -99,26 +99,48 @@ export function setupDocumentRoutes(app) {
     }
   });
 
-  // Update document metadata (title)
+  // Update document metadata or content
   app.patch('/api/documents/:id', authMiddleware, async (req, res) => {
     try {
       const { id } = req.params;
-      const { title } = req.body;
+      const { title, content, ydoc_state } = req.body;
 
-      // Check ownership
-      const { data: doc } = await supabase
+      const { data: doc, error: docError } = await supabase
         .from('documents')
-        .select('owner_id')
+        .select('id, owner_id, is_public')
         .eq('id', id)
         .single();
 
-      if (!doc || doc.owner_id !== req.user.id) {
-        return res.status(403).json({ error: 'Only the owner can update document metadata' });
+      if (docError || !doc) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      const hasAccess = doc.owner_id === req.user.id || doc.is_public;
+      if (!hasAccess) {
+        const { data: access } = await supabase
+          .from('document_access')
+          .select('id')
+          .eq('document_id', id)
+          .eq('user_id', req.user.id)
+          .single();
+
+        if (!access) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+
+      const updates = { updated_at: new Date().toISOString() };
+      if (typeof title === 'string') updates.title = title;
+      if (typeof content === 'string') updates.content = content;
+      if (typeof ydoc_state === 'string') updates.ydoc_state = ydoc_state;
+
+      if (Object.keys(updates).length === 1) {
+        return res.status(400).json({ error: 'No fields provided to update' });
       }
 
       const { data: updated, error } = await supabase
         .from('documents')
-        .update({ title, updated_at: new Date().toISOString() })
+        .update(updates)
         .eq('id', id)
         .select()
         .single();

@@ -36,17 +36,22 @@ function broadcast(docState, msg, exclude) {
   });
 }
 
-function schedulePersist(docId, ydoc) {
+function schedulePersist(docId, ydoc, userId = null) {
   if (persistTimers.has(docId)) clearTimeout(persistTimers.get(docId));
   persistTimers.set(docId, setTimeout(async () => {
     try {
       const base64State = Buffer.from(Y.encodeStateAsUpdate(ydoc)).toString('base64');
-      const content = ydoc.getText('content').toString();
+      const content = ydoc.getText('content')?.toString?.() || '';
       await supabase.from('documents').update({
         ydoc_state: base64State,
         content,
         updated_at: new Date().toISOString(),
       }).eq('id', docId);
+      await supabase.from('document_history').insert({
+        document_id: docId,
+        user_id: userId,
+        snapshot: base64State,
+      });
     } catch (err) { console.error('Persist error:', err); }
   }, 2000));
 }
@@ -76,7 +81,7 @@ async function loadDoc(docId) {
     docState.conns.forEach(ws => {
       if (ws !== origin && ws.readyState === 1) ws.send(msg);
     });
-    schedulePersist(docId, ydoc);
+    schedulePersist(docId, ydoc, null);
   });
 
   return docState;
@@ -138,13 +143,8 @@ export function setupWebSocketServer(wss) {
         if (msgType === SYNC) {
           const enc = encoding.createEncoder();
           encoding.writeVarUint(enc, SYNC);
-          const syncMsgType = syncProtocol.readSyncMessage(dec, enc, ydoc, ws);
-
+          syncProtocol.readSyncMessage(dec, enc, ydoc, ws);
           if (encoding.length(enc) > 1) send(ws, encoding.toUint8Array(enc));
-
-          if (syncMsgType === syncProtocol.messageYjsSyncStep2 || syncMsgType === syncProtocol.messageYjsUpdate) {
-            // persist handled by ydoc.on('update') in loadDoc
-          }
         } else if (msgType === AWARENESS) {
           const update = decoding.readVarUint8Array(dec);
           // Track new client IDs

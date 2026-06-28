@@ -11,8 +11,22 @@ const COLORS = [
   '#BB8FCE', '#85C1E9',
 ];
 
-function getRandomColor() {
-  return COLORS[Math.floor(Math.random() * COLORS.length)];
+function getTabId() {
+  if (typeof window === 'undefined') return 'server-tab';
+  const existing = window.sessionStorage.getItem('collab-tab-id');
+  if (existing) return existing;
+  const next = `tab-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  window.sessionStorage.setItem('collab-tab-id', next);
+  return next;
+}
+
+function getColorForClient(userId, clientId) {
+  const seed = `${userId || 'anonymous'}:${clientId || 'local'}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return COLORS[Math.abs(hash) % COLORS.length];
 }
 
 export function useCollaboration(docId, user, token) {
@@ -53,12 +67,16 @@ export function useCollaboration(docId, user, token) {
       providerRef.current = provider;
       setProvider(provider);
 
-      provider.awareness.setLocalStateField('user', {
-        id: user.id,
+      const tabId = getTabId();
+      const awarenessUser = {
+        id: `${user.id}-${tabId}`,
         name: user.user_metadata?.full_name || user.email,
         email: user.email,
-        color: getRandomColor(),
-      });
+        color: getColorForClient(user.id, tabId),
+        tabId,
+      };
+
+      provider.awareness.setLocalStateField('user', awarenessUser);
 
       provider.on('status', ({ status }) => {
         setStatus(status);
@@ -71,7 +89,7 @@ export function useCollaboration(docId, user, token) {
         const states = Array.from(provider.awareness.getStates().entries());
         const users = states
           .filter(([, state]) => state.user)
-          .map(([clientId, state]) => ({ clientId, ...state.user, cursor: state.cursor }));
+          .map(([clientId, state]) => ({ clientId, ...state.user }));
         setActiveUsers(users);
       };
 
@@ -81,8 +99,15 @@ export function useCollaboration(docId, user, token) {
     })();
 
     return () => {
-      if (provider) {
-        provider.destroy();
+      try {
+        if (provider?.awareness) {
+          provider.awareness.setLocalStateField('user', null);
+        }
+        if (provider) {
+          provider.destroy();
+        }
+      } catch (error) {
+        console.warn('Collaboration cleanup warning:', error);
       }
       if (ydoc) ydoc.destroy();
       setYdoc(null);
@@ -90,11 +115,7 @@ export function useCollaboration(docId, user, token) {
     };
   }, [docId, user, token]);
 
-  const updateCursor = useCallback((position) => {
-    if (providerRef.current) {
-      providerRef.current.awareness.setLocalStateField('cursor', position);
-    }
-  }, []);
+  const updateCursor = useCallback(() => {}, []);
 
   return {
     ydoc,

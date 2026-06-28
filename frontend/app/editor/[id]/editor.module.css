@@ -321,6 +321,28 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.restoreBtn {
+  margin-left: auto;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.restoreBtn:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+}
+
+.restoreBtn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 .historyDot {
   width: 8px;
   height: 8px;
