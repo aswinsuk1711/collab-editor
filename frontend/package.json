@@ -1,0 +1,39 @@
+{
+  "name": "collab-editor-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "@supabase/ssr": "^0.5.1",
+    "next": "14.2.5",
+    "react": "^18",
+    "react-dom": "^18",
+    "yjs": "^13.6.18",
+    "y-websocket": "^2.0.4",
+    "y-protocols": "^1.0.6",
+    "lib0": "^0.2.97",
+    "@tiptap/react": "^2.5.9",
+    "@tiptap/starter-kit": "^2.5.9",
+    "@tiptap/extension-collaboration": "^2.5.9",
+    "@tiptap/extension-collaboration-cursor": "^2.5.9",
+    "@tiptap/extension-placeholder": "^2.5.9",
+    "@tiptap/extension-underline": "^2.5.9",
+    "@tiptap/extension-text-align": "^2.5.9",
+    "@tiptap/extension-highlight": "^2.5.9",
+    "date-fns": "^3.6.0",
+    "lucide-react": "^0.408.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.5"
+  }
+}
