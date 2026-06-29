@@ -63,9 +63,6 @@ export function useCollaboration(docId, user, token, initialContent = '') {
       ydocRef.current = ydoc;
       setYdoc(ydoc);
 
-      // Setup permanentUserData for client-aware coloring
-      permanentUserDataRef.current = new Y.PermanentUserData(ydoc);
-
       // Seed Yjs with initial content before provider connects
       if (initialContent && initialContent.trim()) {
         ydoc.getText('content').insert(0, initialContent);
@@ -141,6 +138,5 @@ export function useCollaboration(docId, user, token, initialContent = '') {
     isSynced,
     activeUsers,
     updateCursor,
-    permanentUserData: permanentUserDataRef.current,
   };
 }

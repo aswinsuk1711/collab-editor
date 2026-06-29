@@ -12,18 +12,7 @@ import Color from '@tiptap/extension-color';
 import { useEffect, useRef, useState } from 'react';
 import { updateDocument } from '@/lib/api';
 
-const USER_COLORS = [
-  { light: '#FF6B6B', dark: '#FF6B6B' },
-  { light: '#4ECDC4', dark: '#4ECDC4' },
-  { light: '#45B7D1', dark: '#45B7D1' },
-  { light: '#96CEB4', dark: '#96CEB4' },
-  { light: '#DDA0DD', dark: '#DDA0DD' },
-  { light: '#85C1E9', dark: '#85C1E9' },
-  { light: '#F0B27A', dark: '#F0B27A' },
-  { light: '#82E0AA', dark: '#82E0AA' },
-];
-
-export default function CollabEditor({ ydoc, provider, user, onEditorReady, initialContent, documentId, token, isOnline, pendingSync, permanentUserData }) {
+export default function CollabEditor({ ydoc, provider, user, onEditorReady, initialContent, documentId, token, isOnline, pendingSync }) {
   const userName = user?.user_metadata?.full_name || user?.email || 'Anonymous';
   const [userColor, setUserColor] = useState('#7C6EFA');
   const hydratedRef = useRef(false);
@@ -56,7 +45,6 @@ export default function CollabEditor({ ydoc, provider, user, onEditorReady, init
         document: ydoc,
         ySyncOptions: {
           color: userColor,
-          permanentUserData,
         },
       }),
       Placeholder.configure({
@@ -96,14 +84,6 @@ export default function CollabEditor({ ydoc, provider, user, onEditorReady, init
       const html = editor.getHTML();
       if (!html.trim()) return;
       if (html === lastSavedContentRef.current) return;
-
-      if (html.length > 250000) {
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem(documentId ? `collab-draft-${documentId}` : 'collab-draft', html);
-        }
-        setDraftStatus('Document is large — syncing will resume after the next save window');
-        return;
-      }
 
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 

@@ -40,7 +40,6 @@ export default function EditorPage() {
     status,
     isSynced,
     activeUsers,
-    permanentUserData,
   } = useCollaboration(id, user, session?.access_token, document?.content || '');
 
   // Load document metadata
@@ -236,7 +235,6 @@ export default function EditorPage() {
                token={session?.access_token}
                isOnline={isOnline}
                pendingSync={pendingSync}
-               permanentUserData={permanentUserData}
              />
           )}
         </div>
