@@ -97,6 +97,14 @@ export default function CollabEditor({ ydoc, provider, user, onEditorReady, init
       if (!html.trim()) return;
       if (html === lastSavedContentRef.current) return;
 
+      if (html.length > 250000) {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(documentId ? `collab-draft-${documentId}` : 'collab-draft', html);
+        }
+        setDraftStatus('Document is large — syncing will resume after the next save window');
+        return;
+      }
+
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
       saveTimeoutRef.current = setTimeout(() => {
