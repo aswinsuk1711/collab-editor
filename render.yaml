@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: collab-editor-backend
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 24.14.1
