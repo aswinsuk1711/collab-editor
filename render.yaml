@@ -4,8 +4,9 @@ services:
     env: node
     plan: free
     region: oregon
+    rootDir: backend
     buildCommand: npm install
-    startCommand: npm run start
+    startCommand: npm start
     envVars:
       - key: NODE_VERSION
-        value: 24.14.1
+        value: 18
