@@ -15,4 +15,4 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: FRONTEND_URL
-        value: https://collab-editor-frontend-ashy.vercel.app
+        value: https://collab-editor-frontend-j4xy7bbhn.vercel.app

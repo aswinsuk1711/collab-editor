@@ -23,6 +23,7 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:3001',
     'https://collab-editor-frontend-ashy.vercel.app',
+    'https://collab-editor-frontend-j4xy7bbhn.vercel.app',
   ],
   credentials: true,
 }));
