@@ -10,3 +10,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 18
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: FRONTEND_URL
+        value: https://collab-editor-frontend-ashy.vercel.app
