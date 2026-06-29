@@ -28,6 +28,8 @@ export default function EditorPage() {
   const [history, setHistory] = useState([]);
   const [editor, setEditor] = useState(null);
   const [restoringHistory, setRestoringHistory] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState('idle');
 
   const { isOnline, pendingSync } = useOfflineSync();
 
@@ -38,7 +40,8 @@ export default function EditorPage() {
     status,
     isSynced,
     activeUsers,
-  } = useCollaboration(id, user, session?.access_token);
+    permanentUserData,
+  } = useCollaboration(id, user, session?.access_token, document?.content || '');
 
   // Load document metadata
   useEffect(() => {
@@ -64,6 +67,24 @@ export default function EditorPage() {
       await updateDocument(id, { title: newTitle }, session.access_token);
     } finally {
       setTimeout(() => setTitleSaving(false), 1000);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!editor || !session?.access_token || !id) return;
+
+    setSaving(true);
+    setSaveState('saving');
+    try {
+      const html = editor.getHTML();
+      await updateDocument(id, { content: html }, session.access_token);
+      setDocument(prev => prev ? { ...prev, content: html } : prev);
+      setSaveState('saved');
+    } catch (err) {
+      console.error('Failed to save document:', err);
+      setSaveState('failed');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -168,6 +189,14 @@ export default function EditorPage() {
         </div>
 
         <div className={styles.headerRight}>
+          <button
+            className={styles.saveBtn}
+            onClick={handleSave}
+            disabled={saving}
+            data-save-state={saveState}
+          >
+            {saving ? 'Saving...' : saveState === 'saved' ? 'Saved' : saveState === 'failed' ? 'Save failed' : 'Save'}
+          </button>
           <button className={styles.historyBtn} onClick={loadHistory}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="1 4 1 10 7 10"/>
@@ -196,18 +225,19 @@ export default function EditorPage() {
       <div className={styles.editorContainer}>
         <div className={styles.editorWrapper}>
           {ydoc && provider && (
-            <CollabEditor
-              key={ydoc.guid}
-              ydoc={ydoc}
-              provider={provider}
-              user={user}
-              onEditorReady={setEditor}
-              initialContent={document?.content || ''}
-              documentId={id}
-              token={session?.access_token}
-              isOnline={isOnline}
-              pendingSync={pendingSync}
-            />
+<CollabEditor
+               key={ydoc.guid}
+               ydoc={ydoc}
+               provider={provider}
+               user={user}
+               onEditorReady={setEditor}
+               initialContent={document?.content || ''}
+               documentId={id}
+               token={session?.access_token}
+               isOnline={isOnline}
+               pendingSync={pendingSync}
+               permanentUserData={permanentUserData}
+             />
           )}
         </div>
       </div>

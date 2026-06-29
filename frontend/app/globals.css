@@ -218,3 +218,9 @@ input, textarea {
 .ProseMirror ::selection {
   background: rgba(124, 110, 250, 0.25);
 }
+
+/* Yjs ychange marks - user-colored text highlights */
+.ProseMirror [style*="background-color"] {
+  border-radius: 2px;
+  padding: 0 1px;
+}

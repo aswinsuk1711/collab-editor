@@ -6,10 +6,27 @@ import { WebsocketProvider } from 'y-websocket';
 import { createClient } from '@/lib/supabase/client';
 
 const COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
-  '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
-  '#BB8FCE', '#85C1E9',
+  { light: '#FF6B6B', dark: '#FF6B6B' },
+  { light: '#4ECDC4', dark: '#4ECDC4' },
+  { light: '#45B7D1', dark: '#45B7D1' },
+  { light: '#96CEB4', dark: '#96CEB4' },
+  { light: '#FFEAA7', dark: '#FFEAA7' },
+  { light: '#DDA0DD', dark: '#DDA0DD' },
+  { light: '#98D8C8', dark: '#98D8C8' },
+  { light: '#F7DC6F', dark: '#F7DC6F' },
+  { light: '#BB8FCE', dark: '#BB8FCE' },
+  { light: '#85C1E9', dark: '#85C1E9' },
 ];
+
+function getColorForClient(userId, clientId) {
+  const seed = `${userId || 'anonymous'}:${clientId || 'local'}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colorDef = COLORS[Math.abs(hash) % COLORS.length];
+  return colorDef.light || colorDef.dark || '#7C6EFA';
+}
 
 function getTabId() {
   if (typeof window === 'undefined') return 'server-tab';
@@ -20,18 +37,10 @@ function getTabId() {
   return next;
 }
 
-function getColorForClient(userId, clientId) {
-  const seed = `${userId || 'anonymous'}:${clientId || 'local'}`;
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return COLORS[Math.abs(hash) % COLORS.length];
-}
-
-export function useCollaboration(docId, user, token) {
+export function useCollaboration(docId, user, token, initialContent = '') {
   const ydocRef = useRef(null);
   const providerRef = useRef(null);
+  const permanentUserDataRef = useRef(null);
   const [status, setStatus] = useState('disconnected');
   const [awareness, setAwareness] = useState(null);
   const [activeUsers, setActiveUsers] = useState([]);
@@ -46,7 +55,6 @@ export function useCollaboration(docId, user, token) {
     let ydoc = null;
 
     (async () => {
-      // Always refresh session to get a non-expired token
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       const freshToken = session?.access_token || token;
@@ -54,6 +62,14 @@ export function useCollaboration(docId, user, token) {
       ydoc = new Y.Doc();
       ydocRef.current = ydoc;
       setYdoc(ydoc);
+
+      // Setup permanentUserData for client-aware coloring
+      permanentUserDataRef.current = new Y.PermanentUserData(ydoc);
+
+      // Seed Yjs with initial content before provider connects
+      if (initialContent && initialContent.trim()) {
+        ydoc.getText('content').insert(0, initialContent);
+      }
 
       const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000';
       const wsBaseUrl = wsUrl.split('?')[0].split('#')[0];
@@ -125,5 +141,6 @@ export function useCollaboration(docId, user, token) {
     isSynced,
     activeUsers,
     updateCursor,
+    permanentUserData: permanentUserDataRef.current,
   };
 }

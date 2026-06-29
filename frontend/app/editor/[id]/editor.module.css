@@ -130,6 +130,7 @@
   flex-shrink: 0;
 }
 
+.saveBtn,
 .historyBtn,
 .shareBtn {
   display: flex;
@@ -146,10 +147,38 @@
   transition: all 0.15s;
 }
 
+.saveBtn:hover,
 .historyBtn:hover,
 .shareBtn:hover {
   color: var(--text-primary);
   border-color: var(--border-emphasis);
+}
+
+.saveBtn {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.saveBtn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: white;
+}
+
+.saveBtn:disabled {
+  opacity: 0.85;
+  cursor: wait;
+}
+
+.saveBtn[data-save-state='saved'] {
+  background: #2f9e44;
+  border-color: #2f9e44;
+}
+
+.saveBtn[data-save-state='failed'] {
+  background: #d9480f;
+  border-color: #d9480f;
 }
 
 .shareBtn {

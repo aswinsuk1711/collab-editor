@@ -1,12 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
 import styles from './auth.module.css';
 
 export default function AuthPage() {
+  return (
+    <Suspense fallback={<AuthPageFallback />}>
+      <AuthPageContent />
+    </Suspense>
+  );
+}
+
+function AuthPageContent() {
   const [mode, setMode] = useState('signin'); // signin | signup | forgot | set-password
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -213,6 +221,17 @@ export default function AuthPage() {
       <div className={styles.bg}>
         <div className={styles.blob1} />
         <div className={styles.blob2} />
+      </div>
+    </div>
+  );
+}
+
+function AuthPageFallback() {
+  return (
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <Logo />
+        <div className={styles.spinner} />
       </div>
     </div>
   );
